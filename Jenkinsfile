@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        nodejs "node18"      // Must match NodeJS name in Manage Jenkins -> Tools
-    }
-
     stages {
         stage('Checkout') {
             steps {
@@ -26,7 +22,7 @@ pipeline {
 
         stage('SonarQube Analysis') {
             steps {
-                withSonarQubeEnv('local-sonar') {   // Must match SonarQube server name in Jenkins
+                withSonarQubeEnv('local-sonar') {   // same name as in Jenkins config
                     sh 'sonar-scanner'
                 }
             }
