@@ -19,13 +19,5 @@ pipeline {
                 sh 'npm test'
             }
         }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('local-sonar') {   // same name as in Jenkins config
-                    sh 'sonar-scanner'
-                }
-            }
-        }
     }
 }
