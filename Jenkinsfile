@@ -15,15 +15,24 @@ pipeline {
             }
         }
 
-        stage('SonarQube Analysis') {
-    steps {
-        withSonarQubeEnv('MySonarQube') {
-            sh 'echo "SONAR HOST: $SONAR_HOST_URL"'
-            sh 'echo "TOKEN: $SONAR_AUTH_TOKEN"'
-            sh "/opt/sonar-scanner/sonar-scanner-7.3.0.5189/bin/sonar-scanner"
+        stage('OWASP Dependency Check') {
+            steps {
+                sh "/opt/dependency-check-v12/bin/dependency-check.sh --scan . --format XML --out dependency-check-report"
+            }
+            post {
+                always {
+                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml'
+                }
+            }
         }
-    }
-}
+
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQube') {
+                    sh "/opt/sonar-scanner/sonar-scanner-7.3.0.5189/bin/sonar-scanner"
+                }
+            }
+        }
 
         stage('Run tests') {
             steps {
