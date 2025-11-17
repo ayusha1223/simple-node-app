@@ -2,6 +2,7 @@ pipeline {
     agent any
 
     stages {
+
         stage('Checkout') {
             steps {
                 checkout scm
@@ -14,22 +15,18 @@ pipeline {
             }
         }
 
+        stage('SonarQube Analysis') {
+            steps {
+                withSonarQubeEnv('MySonarQube') {
+                    sh "/opt/sonar-scanner/sonar-scanner-7.3.0.5189/bin/sonar-scanner"
+                }
+            }
+        }
+
         stage('Run tests') {
             steps {
                 sh 'npm test'
             }
         }
-
-        stage('SonarQube Analysis') {
-    steps {
-        script {
-            def scannerHome = tool 'ManualScanner'
-            withSonarQubeEnv('MySonarQube') {
-                sh "${scannerHome}/bin/sonar-scanner"
-            }
-        }
-    }
-}
-
     }
 }
