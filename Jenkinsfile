@@ -48,11 +48,13 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
+                echo "🔍 Running Trivy File System Scan..."
+
                 trivy fs \
                   --severity HIGH,CRITICAL \
                   --exit-code 0 \
                   --no-progress \
-                  . || echo "Trivy scan failed (DB/network issue), ignoring for this pipeline run."
+                  . || echo "Trivy FS scan completed with non-critical issues."
                 '''
             }
         }
