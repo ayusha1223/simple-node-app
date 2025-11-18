@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "simple-node-app"
+    }
+
     stages {
 
         stage('Checkout') {
@@ -45,16 +49,25 @@ pipeline {
             }
         }
 
-        stage('Trivy Scan') {
+        stage('Build Docker Image') {
             steps {
                 sh '''
-                echo "🔍 Running Trivy File System Scan..."
+                echo "🐳 Building Docker Image..."
+                docker build -t ${IMAGE_NAME}:latest .
+                '''
+            }
+        }
 
-                trivy fs \
+        stage('Trivy Image Scan') {
+            steps {
+                sh '''
+                echo "🔍 Running Trivy Image Scan..."
+
+                trivy image \
                   --severity HIGH,CRITICAL \
                   --exit-code 0 \
                   --no-progress \
-                  . || echo "Trivy FS scan completed with non-critical issues."
+                  ${IMAGE_NAME}:latest || echo "Trivy image scan found issues or had network problems."
                 '''
             }
         }
