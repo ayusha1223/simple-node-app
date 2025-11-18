@@ -45,6 +45,18 @@ pipeline {
             }
         }
 
+        stage('Trivy Scan') {
+            steps {
+                sh '''
+                trivy fs \
+                  --severity HIGH,CRITICAL \
+                  --exit-code 0 \
+                  --no-progress \
+                  .
+                '''
+            }
+        }
+
         stage('Run tests') {
             steps {
                 sh 'npm test'
