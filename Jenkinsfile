@@ -17,7 +17,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo " Installing Node dependencies..."
+                    echo "📦 Installing Node dependencies..."
                     npm install
                 '''
             }
@@ -26,7 +26,7 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    echo " Running Trivy scan..."
+                    echo "🔍 Running Trivy scan..."
                     trivy fs . --exit-code 0 --format table
                 '''
             }
@@ -35,7 +35,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-                    echo " Building Docker image..."
+                    echo "🐳 Building Docker image..."
                     docker build -t ${DOCKER_IMAGE}:latest .
                 '''
             }
@@ -43,41 +43,29 @@ pipeline {
 
         stage('Docker Login & Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
-                                                 usernameVariable: 'DOCKER_USER',
-                                                 passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        echo "Logging into Docker Hub..."
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
+                sh '''
+                    echo "🔐 Logging into Docker Hub..."
+                    echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
 
-                        echo " Pushing Docker image..."
-                        docker push ${DOCKER_IMAGE}:latest
-                    '''
-                }
+                    echo "📤 Pushing image..."
+                    docker push ${DOCKER_IMAGE}:latest
+                '''
             }
         }
 
         stage('Deploy to WSL Server') {
             steps {
                 sshagent(['local-server-creds']) {
-                    sh """
-                        echo 'Deploying to WSL server...'
+                    sh '''
+                        echo "🚀 Deploying to WSL server..."
 
-                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} '
+                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} "
                             docker stop simple-node-app || true &&
                             docker rm simple-node-app || true &&
                             docker pull ${DOCKER_IMAGE}:latest &&
                             docker run -d --name simple-node-app -p 3000:3000 ${DOCKER_IMAGE}:latest
-                        '
-                    """
-                }
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                withSonarQubeEnv('MySonarQube') {
-                    sh "/opt/sonar-scanner/bin/sonar-scanner"
+                        "
+                    '''
                 }
             }
         }
@@ -85,10 +73,10 @@ pipeline {
 
     post {
         success {
-            echo " Deployment complete! Visit: http://${WSL_IP}:3000"
+            echo "🎉 Deployment complete! Visit: http://${WSL_IP}:3000"
         }
         failure {
-            echo " Pipeline failed!"
+            echo "❌ Pipeline failed!"
         }
     }
 }
