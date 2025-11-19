@@ -55,8 +55,13 @@ stage('OWASP Dependency Check') {
         '''
     }
 }
-
-
+stage('Trivy FS Scan') {
+    steps {
+        sh '''
+            trivy fs . --exit-code 0 --format html --output trivy-report.html
+        '''
+    }
+}
 
         stage('SonarQube Analysis') {
             steps {
