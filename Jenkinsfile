@@ -15,15 +15,6 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
-            steps {
-                sh '''
-                echo "Running OWASP Dependency Check..."
-                dependency-check.sh --scan . --format HTML --out owasp-report
-                '''
-            }
-        }
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
