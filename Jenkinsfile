@@ -16,14 +16,13 @@ pipeline {
         }
 
         stage('SonarQube Analysis') {
-            agent {
-                docker {
-                    image 'sonarsource/sonar-scanner-cli:latest'
-                }
-            }
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    sh 'sonar-scanner'
+                    script {
+                        docker.image('sonarsource/sonar-scanner-cli:latest').inside {
+                            sh 'sonar-scanner'
+                        }
+                    }
                 }
             }
         }
