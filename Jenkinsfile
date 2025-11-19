@@ -18,11 +18,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    script {
-                        docker.image('sonarsource/sonar-scanner-cli:latest').inside {
-                            sh 'sonar-scanner'
-                        }
-                    }
+                    sh '/opt/sonar-scanner/bin/sonar-scanner'
                 }
             }
         }
