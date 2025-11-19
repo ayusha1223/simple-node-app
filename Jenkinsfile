@@ -2,10 +2,8 @@ pipeline {
     agent any
 
     environment {
-        SONAR = credentials('MySonarQube')
-        DOCKERHUB_USER = 'ayusha1223'
-        DOCKERHUB_PASS = 'ayusha123'
-        IMAGE_NAME = 'simple-node-app'
+        DOCKER_IMAGE = "ayusha1223/simple-node-app"
+        WSL_IP = "172.31.151.138"
     }
 
     stages {
@@ -18,14 +16,17 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'npm install'
+                sh '''
+                    echo "📦 Installing Node dependencies..."
+                    npm install
+                '''
             }
         }
 
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    echo "🔍 Running Trivy FS Scan..."
+                    echo "🔍 Running Trivy scan..."
                     trivy fs . --exit-code 0 --format table
                 '''
             }
@@ -35,7 +36,7 @@ pipeline {
             steps {
                 sh '''
                     echo "🐳 Building Docker image..."
-                    docker build -t $DOCKERHUB_USER/$IMAGE_NAME:latest .
+                    docker build -t ${DOCKER_IMAGE}:latest .
                 '''
             }
         }
@@ -44,37 +45,46 @@ pipeline {
             steps {
                 sh '''
                     echo "🔐 Logging into Docker Hub..."
-                    echo $DOCKERHUB_PASS | docker login -u "$DOCKERHUB_USER" --password-stdin
-                    
+                    echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+
                     echo "📤 Pushing image..."
-                    docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                    docker push ${DOCKER_IMAGE}:latest
                 '''
             }
         }
 
-        stage('Deploy to Local Server (WSL)') {
+        stage('Deploy to WSL Server') {
             steps {
-                sh '''
-                    echo "🚀 Deploying to local WSL server..."
+                sshagent(['local-server-creds']) {
+                    sh '''
+                        echo "🚀 Deploying to WSL server..."
 
-                    docker rm -f simple-node-app || true
-
-                    docker run -d \
-                        --name simple-node-app \
-                        -p 3000:3000 \
-                        ayusha1223/simple-node-app:latest
-
-                    echo "🎉 Deployment finished!"
-                '''
+                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} "
+                            docker stop simple-node-app || true &&
+                            docker rm simple-node-app || true &&
+                            docker pull ${DOCKER_IMAGE}:latest &&
+                            docker run -d --name simple-node-app -p 3000:3000 ${DOCKER_IMAGE}:latest
+                        "
+                    '''
+                }
             }
         }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    sh '/opt/sonar-scanner/bin/sonar-scanner'
+                    sh "/opt/sonar-scanner/bin/sonar-scanner"
                 }
             }
+        }
+    }
+
+    post {
+        success {
+            echo "🎉 Deployment complete! Visit: http://${WSL_IP}:3000"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
         }
     }
 }
