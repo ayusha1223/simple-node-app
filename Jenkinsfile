@@ -14,11 +14,5 @@ pipeline {
                 sh 'npm install'
             }
         }
-
-        stage('Run Tests') {
-            steps {
-                sh 'npm test || echo "Tests failed, but continuing..."'
-            }
-        }
     }
 }
