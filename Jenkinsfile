@@ -4,6 +4,10 @@ pipeline {
     environment {
         DOCKER_IMAGE = "ayusha1223/simple-node-app"
         WSL_IP = "172.31.151.138"
+
+        // Credentials from Jenkins global env
+        DOCKER_USERNAME = credentials('docker-hub-creds').username
+        DOCKER_PASSWORD = credentials('docker-hub-creds').password
     }
 
     stages {
@@ -56,16 +60,16 @@ pipeline {
         stage('Deploy to WSL Server') {
             steps {
                 sshagent(['local-server-creds']) {
-                    sh '''
-                        echo "🚀 Deploying to WSL server..."
+                    sh """
+                        echo '🚀 Deploying to WSL server...'
 
-                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} "
+                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} '
                             docker stop simple-node-app || true &&
                             docker rm simple-node-app || true &&
                             docker pull ${DOCKER_IMAGE}:latest &&
                             docker run -d --name simple-node-app -p 3000:3000 ${DOCKER_IMAGE}:latest
-                        "
-                    '''
+                        '
+                    """
                 }
             }
         }
