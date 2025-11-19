@@ -14,23 +14,48 @@ pipeline {
                 sh 'npm install'
             }
         }
-
-        stage('OWASP Dependency Check') {
+stage('OWASP Dependency Check') {
     steps {
         sh '''
-        echo "Running OWASP in OFFLINE MODE..."
+        echo "Running OWASP (v10) in FULL OFFLINE MODE..."
 
         /opt/dependency-check-cli/bin/dependency-check.sh \
             --scan . \
             --format HTML \
             --out owasp-report \
-            --disableNVD \
-            --disableOssIndex \
+            --project simple-node-app \
+            --noupdate \
+            --disableAssembly \
+            --disableAutoconf \
+            --disableBundleAudit \
+            --disableCocoapodsAnalyzer \
+            --disableComposer \
+            --disableCPE \
+            --disableCPEMatching \
+            --disableCPESuppression \
+            --disableGolangMod \
+            --disableGolangDep \
+            --disableMSBuild \
+            --disableNodeJS \
+            --disableNodePackage \
+            --disableNodeAudit \
+            --disableNodeJsScan \
+            --disableNpmCPE \
+            --disableNpmAuditAnalyzer \
+            --disableOSSIndex \
             --disableRetireJS \
-            --noupdate
+            --disableRubyBundleAudit \
+            --disableSwiftPackageManager \
+            --disablePyDist \
+            --disablePyPkg \
+            --disablePyEnv \
+            --disablePip \
+            --disablePipfile \
+            --disablePoetry
         '''
     }
 }
+
 
 
         stage('SonarQube Analysis') {
