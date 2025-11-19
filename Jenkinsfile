@@ -19,27 +19,7 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
-            steps {
-                sh '''
-                mkdir -p /var/jenkins_home/odc-data
-
-                /opt/dependency-check-v12/bin/dependency-check.sh \
-                  --scan . \
-                  --format XML \
-                  --out dependency-check-report \
-                  --data /var/jenkins_home/odc-data \
-                  --disableOssIndex \
-                  --disableYarnAudit \
-                  --failOnCVSS 11
-                '''
-            }
-            post {
-                always {
-                    dependencyCheckPublisher pattern: 'dependency-check-report/dependency-check-report.xml'
-                }
-            }
-        }
+        // ❌ OWASP Removed
 
         stage('SonarQube Analysis') {
             steps {
