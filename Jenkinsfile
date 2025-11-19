@@ -19,12 +19,10 @@ pipeline {
             }
         }
 
-        // ❌ OWASP Removed
-
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    sh "/opt/sonar-scanner/sonar-scanner-7.3.0.5189/bin/sonar-scanner"
+                    sh "/opt/sonar-scanner/bin/sonar-scanner"
                 }
             }
         }
