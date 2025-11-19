@@ -16,16 +16,22 @@ pipeline {
         }
 
         stage('OWASP Dependency Check') {
-            steps {
-                sh '''
-                echo "Running OWASP Dependency Check..."
-                /opt/dependency-check-cli/bin/dependency-check.sh \
-                    --scan . \
-                    --format HTML \
-                    --out owasp-report
-                '''
-            }
-        }
+    steps {
+        sh '''
+        echo "Running OWASP in OFFLINE MODE..."
+
+        /opt/dependency-check-cli/bin/dependency-check.sh \
+            --scan . \
+            --format HTML \
+            --out owasp-report \
+            --disableNVD \
+            --disableOssIndex \
+            --disableRetireJS \
+            --noupdate
+        '''
+    }
+}
+
 
         stage('SonarQube Analysis') {
             steps {
