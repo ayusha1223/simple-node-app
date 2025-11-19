@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    environment {
+        SONAR = credentials('MySonarQube')   // Your SonarQube token
+    }
+
     stages {
 
         stage('Checkout Code') {
@@ -14,59 +18,45 @@ pipeline {
                 sh 'npm install'
             }
         }
-stage('OWASP Dependency Check') {
-    steps {
-        sh '''
-        echo "Running OWASP (v10) in FULL OFFLINE MODE..."
 
-        /opt/dependency-check-cli/bin/dependency-check.sh \
-            --scan . \
-            --format HTML \
-            --out owasp-report \
-            --project simple-node-app \
-            --noupdate \
-            --disableAssembly \
-            --disableAutoconf \
-            --disableBundleAudit \
-            --disableCocoapodsAnalyzer \
-            --disableComposer \
-            --disableCPE \
-            --disableCPEMatching \
-            --disableCPESuppression \
-            --disableGolangMod \
-            --disableGolangDep \
-            --disableMSBuild \
-            --disableNodeJS \
-            --disableNodePackage \
-            --disableNodeAudit \
-            --disableNodeJsScan \
-            --disableNpmCPE \
-            --disableNpmAuditAnalyzer \
-            --disableOSSIndex \
-            --disableRetireJS \
-            --disableRubyBundleAudit \
-            --disableSwiftPackageManager \
-            --disablePyDist \
-            --disablePyPkg \
-            --disablePyEnv \
-            --disablePip \
-            --disablePipfile \
-            --disablePoetry
-        '''
-    }
-}
-stage('Trivy FS Scan') {
-    steps {
-        sh '''
-            trivy fs . --exit-code 0 --format html --output trivy-report.html
-        '''
-    }
-}
+        stage('OWASP Dependency Check') {
+            steps {
+                sh '''
+                    echo "Running OWASP in FULL OFFLINE MODE..."
+                    /opt/dependency-check-cli/bin/dependency-check.sh \
+                      --scan . \
+                      --format HTML \
+                      --out owasp-report \
+                      --project simple-node-app \
+                      --noupdate
+                '''
+            }
+        }
+
+        stage('Trivy Scan') {
+            steps {
+                sh '''
+                    echo "Running Trivy FileSystem Scan..."
+                    trivy fs . --exit-code 0 --format html --output trivy-report.html
+                '''
+            }
+        }
+
+        stage('Build Node App') {
+            steps {
+                sh '''
+                    echo "Building application..."
+                    npm run build || true   # Prevent crash if no build script
+                '''
+            }
+        }
 
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('MySonarQube') {
-                    sh '/opt/sonar-scanner/bin/sonar-scanner'
+                    sh '''
+                        /opt/sonar-scanner/bin/sonar-scanner
+                    '''
                 }
             }
         }
