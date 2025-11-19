@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        SONAR = credentials('MySonarQube')   // Your SonarQube token
-    }
-
     stages {
 
         stage('Checkout Code') {
@@ -46,7 +42,7 @@ pipeline {
             steps {
                 sh '''
                     echo "Building application..."
-                    npm run build || true   # Prevent crash if no build script
+                    npm run build || true
                 '''
             }
         }
