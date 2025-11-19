@@ -4,10 +4,6 @@ pipeline {
     environment {
         DOCKER_IMAGE = "ayusha1223/simple-node-app"
         WSL_IP = "172.31.151.138"
-
-        // Credentials from Jenkins global env
-        DOCKER_USERNAME = credentials('docker-hub-creds').username
-        DOCKER_PASSWORD = credentials('docker-hub-creds').password
     }
 
     stages {
@@ -21,7 +17,7 @@ pipeline {
         stage('Install Dependencies') {
             steps {
                 sh '''
-                    echo "📦 Installing Node dependencies..."
+                    echo " Installing Node dependencies..."
                     npm install
                 '''
             }
@@ -30,7 +26,7 @@ pipeline {
         stage('Trivy Scan') {
             steps {
                 sh '''
-                    echo "🔍 Running Trivy scan..."
+                    echo " Running Trivy scan..."
                     trivy fs . --exit-code 0 --format table
                 '''
             }
@@ -39,7 +35,7 @@ pipeline {
         stage('Docker Build') {
             steps {
                 sh '''
-                    echo "🐳 Building Docker image..."
+                    echo " Building Docker image..."
                     docker build -t ${DOCKER_IMAGE}:latest .
                 '''
             }
@@ -47,13 +43,17 @@ pipeline {
 
         stage('Docker Login & Push') {
             steps {
-                sh '''
-                    echo "🔐 Logging into Docker Hub..."
-                    echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds',
+                                                 usernameVariable: 'DOCKER_USER',
+                                                 passwordVariable: 'DOCKER_PASS')]) {
+                    sh '''
+                        echo "Logging into Docker Hub..."
+                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
 
-                    echo "📤 Pushing image..."
-                    docker push ${DOCKER_IMAGE}:latest
-                '''
+                        echo " Pushing Docker image..."
+                        docker push ${DOCKER_IMAGE}:latest
+                    '''
+                }
             }
         }
 
@@ -61,7 +61,7 @@ pipeline {
             steps {
                 sshagent(['local-server-creds']) {
                     sh """
-                        echo '🚀 Deploying to WSL server...'
+                        echo 'Deploying to WSL server...'
 
                         ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} '
                             docker stop simple-node-app || true &&
@@ -85,10 +85,10 @@ pipeline {
 
     post {
         success {
-            echo "🎉 Deployment complete! Visit: http://${WSL_IP}:3000"
+            echo " Deployment complete! Visit: http://${WSL_IP}:3000"
         }
         failure {
-            echo "❌ Pipeline failed!"
+            echo " Pipeline failed!"
         }
     }
 }
