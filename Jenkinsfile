@@ -45,16 +45,19 @@ pipeline {
         }
 
         stage('Docker Login & Push') {
-            steps {
-                sh '''
-                    echo "🔐 Logging into Docker Hub..."
-                    echo "${DOCKER_PASSWORD}" | docker login -u "${DOCKER_USERNAME}" --password-stdin
+    steps {
+        withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+            sh '''
+                echo "🔐 Logging into Docker Hub..."
+                echo "$PASS" | docker login -u "$USER" --password-stdin
 
-                    echo "📤 Pushing image..."
-                    docker push ${DOCKER_IMAGE}:latest
-                '''
-            }
+                echo "📤 Pushing image..."
+                docker push ${DOCKER_IMAGE}:latest
+            '''
         }
+    }
+}
+
 
         stage('Deploy to WSL Server') {
             steps {
