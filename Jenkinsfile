@@ -33,9 +33,12 @@ pipeline {
         }
 
         stage('Docker Build') {
+            environment {
+                DOCKER_BUILDKIT = "0"
+            }
             steps {
                 sh '''
-                    echo "🐳 Building Docker image..."
+                    echo "🐳 Building Docker image (BuildKit Disabled)..."
                     docker build -t ${DOCKER_IMAGE}:latest .
                 '''
             }
