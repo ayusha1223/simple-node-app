@@ -23,19 +23,20 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            steps {
-                withSonarQubeEnv('sonarqube') {
-                    sh '''
-                        echo "🔎 Running SonarQube analysis..."
-                        sonar-scanner \
-                        -Dsonar.projectKey=simple-node-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
-                }
-            }
+    steps {
+        withSonarQubeEnv('sonarqube') {
+            sh '''
+                echo "🔎 Running SonarQube analysis..."
+                /opt/sonar-scanner/bin/sonar-scanner \
+                -Dsonar.projectKey=simple-node-app \
+                -Dsonar.sources=. \
+                -Dsonar.host.url=http://localhost:9000 \
+                -Dsonar.login=$SONAR_AUTH_TOKEN
+            '''
         }
+    }
+}
+
 
         stage('Trivy Scan') {
             steps {
