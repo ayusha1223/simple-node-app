@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "ayusha1223/simple-node-app"
-        WSL_IP = "172.31.151.138"
+        // WSL_IP = "172.31.151.138"   // Not needed now
     }
 
     stages {
@@ -46,7 +46,13 @@ pipeline {
 
         stage('Docker Login & Push') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'docker-hub-creds',
+                        usernameVariable: 'USER',
+                        passwordVariable: 'PASS'
+                    )
+                ]) {
                     sh '''
                         echo "🔐 Logging into Docker Hub..."
                         echo "$PASS" | docker login -u "$USER" --password-stdin
@@ -57,6 +63,15 @@ pipeline {
                 }
             }
         }
+
+        /*
+        =====================================================
+        DEPLOY STAGE (COMMENTED – NOT REQUIRED NOW)
+        Reason:
+        - Requires SSH Agent plugin
+        - Requires SSH credentials
+        - Not needed for CI demonstration
+        =====================================================
 
         stage('Deploy to WSL Server') {
             steps {
@@ -74,11 +89,12 @@ pipeline {
                 }
             }
         }
+        */
     }
 
     post {
         success {
-            echo "🎉 Deployment complete! Visit: http://${WSL_IP}:3000"
+            echo "🎉 CI Pipeline completed successfully!"
         }
         failure {
             echo "❌ Pipeline failed!"
