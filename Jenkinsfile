@@ -3,7 +3,6 @@ pipeline {
 
     environment {
         DOCKER_IMAGE = "ayusha1223/simple-node-app"
-        // WSL_IP = "172.31.151.138"   // Not needed now
     }
 
     stages {
@@ -23,6 +22,21 @@ pipeline {
             }
         }
 
+        stage('SonarQube Scan') {
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                        echo "🔎 Running SonarQube analysis..."
+                        sonar-scanner \
+                        -Dsonar.projectKey=simple-node-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
+                }
+            }
+        }
+
         stage('Trivy Scan') {
             steps {
                 sh '''
@@ -38,7 +52,7 @@ pipeline {
             }
             steps {
                 sh '''
-                    echo "🐳 Building Docker image (BuildKit Disabled)..."
+                    echo "🐳 Building Docker image..."
                     docker build -t ${DOCKER_IMAGE}:latest .
                 '''
             }
@@ -65,28 +79,11 @@ pipeline {
         }
 
         /*
-        =====================================================
-        DEPLOY STAGE (COMMENTED – NOT REQUIRED NOW)
-        Reason:
-        - Requires SSH Agent plugin
-        - Requires SSH credentials
-        - Not needed for CI demonstration
-        =====================================================
+        DEPLOY STAGE (COMMENTED FOR NOW)
 
-        stage('Deploy to WSL Server') {
+        stage('Deploy') {
             steps {
-                sshagent(['local-server-creds']) {
-                    sh '''
-                        echo "🚀 Deploying to WSL server..."
-
-                        ssh -o StrictHostKeyChecking=no ayusha@${WSL_IP} "
-                            docker stop simple-node-app || true &&
-                            docker rm simple-node-app || true &&
-                            docker pull ${DOCKER_IMAGE}:latest &&
-                            docker run -d --name simple-node-app -p 3000:3000 ${DOCKER_IMAGE}:latest
-                        "
-                    '''
-                }
+                echo "Deployment will be added later"
             }
         }
         */
@@ -94,7 +91,7 @@ pipeline {
 
     post {
         success {
-            echo "🎉 CI Pipeline completed successfully!"
+            echo "🎉 CI Pipeline completed successfully with SonarQube!"
         }
         failure {
             echo "❌ Pipeline failed!"
