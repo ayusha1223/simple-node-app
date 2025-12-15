@@ -106,11 +106,15 @@ stage('OWASP Dependency Check') {
     }
 
     post {
-        success {
-            echo "🎉 CI Pipeline completed successfully with SonarQube!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-        }
+    always {
+        echo "📦 Archiving OWASP Dependency-Check report..."
+        archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
+    }
+    success {
+        echo "🎉 CI Pipeline completed successfully with SonarQube!"
+    }
+    failure {
+        echo "❌ Pipeline failed!"
     }
 }
+
