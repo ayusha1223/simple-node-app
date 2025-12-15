@@ -23,34 +23,32 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-    steps {
-        withSonarQubeEnv('sonarqube') {
-            sh '''
-                echo "🔎 Running SonarQube analysis..."
-                /opt/sonar-scanner/bin/sonar-scanner \
-                -Dsonar.projectKey=simple-node-app \
-                -Dsonar.sources=. \
-                -Dsonar.host.url=http://localhost:9000 \
-                -Dsonar.login=$SONAR_AUTH_TOKEN
-            '''
+            steps {
+                withSonarQubeEnv('sonarqube') {
+                    sh '''
+                        echo "🔎 Running SonarQube analysis..."
+                        /opt/sonar-scanner/bin/sonar-scanner \
+                        -Dsonar.projectKey=simple-node-app \
+                        -Dsonar.sources=. \
+                        -Dsonar.host.url=http://localhost:9000 \
+                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
+                }
+            }
         }
-    }
-}
 
-stage('OWASP Dependency Check') {
-    steps {
-        sh '''
-            echo "🔐 Running OWASP Dependency-Check..."
-            /opt/dependency-check/bin/dependency-check.sh \
-            --scan . \
-            --format HTML \
-            --out dependency-check-report \
-            --disableAssembly
-        '''
-    }
-}
-
-
+        stage('OWASP Dependency Check') {
+            steps {
+                sh '''
+                    echo "🔐 Running OWASP Dependency-Check..."
+                    /opt/dependency-check/bin/dependency-check.sh \
+                    --scan . \
+                    --format HTML \
+                    --out dependency-check-report \
+                    --disableAssembly
+                '''
+            }
+        }
 
         stage('Trivy Scan') {
             steps {
@@ -85,36 +83,24 @@ stage('OWASP Dependency Check') {
                     sh '''
                         echo "🔐 Logging into Docker Hub..."
                         echo "$PASS" | docker login -u "$USER" --password-stdin
-
                         echo "📤 Pushing image..."
                         docker push ${DOCKER_IMAGE}:latest
                     '''
                 }
             }
         }
-
-        /*
-        ==============================
-        DEPLOY STAGE (COMMENTED)
-        ==============================
-        stage('Deploy') {
-            steps {
-                echo "Deployment will be added later"
-            }
-        }
-        */
     }
 
     post {
-    always {
-        echo "📦 Archiving OWASP Dependency-Check report..."
-        archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
-    }
-    success {
-        echo "🎉 CI Pipeline completed successfully with SonarQube!"
-    }
-    failure {
-        echo "❌ Pipeline failed!"
+        always {
+            echo "📦 Archiving OWASP Dependency-Check report..."
+            archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
+        }
+        success {
+            echo "🎉 CI Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ Pipeline failed!"
+        }
     }
 }
-
