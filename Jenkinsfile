@@ -28,32 +28,30 @@ pipeline {
                     sh '''
                         echo "🔎 Running SonarQube analysis..."
                         /opt/sonar-scanner/bin/sonar-scanner \
-                        -Dsonar.projectKey=simple-node-app \
-                        -Dsonar.sources=. \
-                        -Dsonar.host.url=http://localhost:9000 \
-                        -Dsonar.login=$SONAR_AUTH_TOKEN
+                          -Dsonar.projectKey=simple-node-app \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=http://localhost:9000 \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN
                     '''
                 }
             }
         }
 
-       stage('OWASP Dependency Check') {
-    steps {
-        sh '''
-            echo "🔐 Running OWASP Dependency-Check (Docker)..."
+        stage('OWASP Dependency Check (Simple)') {
+            steps {
+                sh '''
+                    echo "🔐 Running OWASP Dependency-Check (Docker)..."
 
-            docker run --rm \
-              -v "$(pwd):/src" \
-              owasp/dependency-check \
-              --scan /src \
-              --format HTML \
-              --out /src/dependency-check-report \
-              --disableAssembly
-        '''
-    }
-}
-
-
+                    docker run --rm \
+                      -v "$(pwd):/src" \
+                      owasp/dependency-check \
+                      --scan /src \
+                      --format HTML \
+                      --out /src/dependency-check-report \
+                      --disableAssembly
+                '''
+            }
+        }
 
         stage('Trivy Scan') {
             steps {
@@ -65,9 +63,6 @@ pipeline {
         }
 
         stage('Docker Build') {
-            environment {
-                DOCKER_BUILDKIT = "0"
-            }
             steps {
                 sh '''
                     echo "🐳 Building Docker image..."
@@ -88,6 +83,7 @@ pipeline {
                     sh '''
                         echo "🔐 Logging into Docker Hub..."
                         echo "$PASS" | docker login -u "$USER" --password-stdin
+
                         echo "📤 Pushing image..."
                         docker push ${DOCKER_IMAGE}:latest
                     '''
@@ -96,9 +92,16 @@ pipeline {
         }
     }
 
-   post {
-    always {
-        archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
+    post {
+        always {
+            echo "📦 Archiving OWASP report..."
+            archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
+        }
+        success {
+            echo "🎉 CI Pipeline completed successfully!"
+        }
+        failure {
+            echo "❌ CI Pipeline failed!"
+        }
     }
 }
-
