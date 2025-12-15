@@ -37,19 +37,22 @@ pipeline {
             }
         }
 
-        stage('OWASP Dependency Check') {
+       stage('OWASP Dependency Check') {
     steps {
         sh '''
-            echo "🔐 Running OWASP Dependency-Check..."
-            /opt/dependency-check/bin/dependency-check.sh \
-            --scan . \
-            --format HTML \
-            --out dependency-check-report \
-            --disableAssembly \
-            --noupdate
+            echo "🔐 Running OWASP Dependency-Check (Docker)..."
+
+            docker run --rm \
+              -v "$(pwd):/src" \
+              owasp/dependency-check \
+              --scan /src \
+              --format HTML \
+              --out /src/dependency-check-report \
+              --disableAssembly
         '''
     }
 }
+
 
 
         stage('Trivy Scan') {
@@ -93,16 +96,9 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            echo "📦 Archiving OWASP Dependency-Check report..."
-            archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
-        }
-        success {
-            echo "🎉 CI Pipeline completed successfully!"
-        }
-        failure {
-            echo "❌ Pipeline failed!"
-        }
+   post {
+    always {
+        archiveArtifacts artifacts: 'dependency-check-report/**', fingerprint: true
     }
 }
+
