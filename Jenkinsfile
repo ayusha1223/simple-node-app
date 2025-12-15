@@ -23,15 +23,11 @@ pipeline {
         }
 
         stage('SonarQube Scan') {
-            environment {
-                // This must match the Sonar Scanner name in Jenkins Global Tool Configuration
-                SCANNER_HOME = tool 'sonar-scanner'
-            }
             steps {
                 withSonarQubeEnv('sonarqube') {
                     sh '''
                         echo "🔎 Running SonarQube analysis..."
-                        ${SCANNER_HOME}/bin/sonar-scanner \
+                        sonar-scanner \
                         -Dsonar.projectKey=simple-node-app \
                         -Dsonar.sources=. \
                         -Dsonar.host.url=http://localhost:9000 \
