@@ -38,17 +38,19 @@ pipeline {
         }
 
         stage('OWASP Dependency Check') {
-            steps {
-                sh '''
-                    echo "🔐 Running OWASP Dependency-Check..."
-                    /opt/dependency-check/bin/dependency-check.sh \
-                    --scan . \
-                    --format HTML \
-                    --out dependency-check-report \
-                    --disableAssembly
-                '''
-            }
-        }
+    steps {
+        sh '''
+            echo "🔐 Running OWASP Dependency-Check..."
+            /opt/dependency-check/bin/dependency-check.sh \
+            --scan . \
+            --format HTML \
+            --out dependency-check-report \
+            --disableAssembly \
+            --noupdate
+        '''
+    }
+}
+
 
         stage('Trivy Scan') {
             steps {
